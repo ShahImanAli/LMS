@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -45,7 +45,6 @@ const CourseTab = () => {
       error: publishError,
       isSuccess: publishIsSuccess,
       isError: publishIsError,
-      isLoading: publishIsLoading,
     },
   ] = usePublishCourseMutation();
 
@@ -66,7 +65,6 @@ const CourseTab = () => {
   const {
     data: courseByIdData,
     isLoading: courseByIdIsLoading,
-    isError: courseByIdIsError,
   } = useGetCourseByIdQuery(courseId, { refetchOnMountOrArgChange: true });
 
   const [input, setInput] = useState({
@@ -271,6 +269,13 @@ const CourseTab = () => {
                     <SelectItem value="design">Design</SelectItem>
                     <SelectItem value="marketing">Marketing</SelectItem>
                     <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="nextjs">Next JS</SelectItem>
+                    <SelectItem value="javascript">Javascript</SelectItem>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="react">React</SelectItem>
+                    <SelectItem value="nodejs">Node.js</SelectItem>
+                    <SelectItem value="mongodb">MongoDB</SelectItem>
+                    <SelectItem value="docker">Docker</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>

@@ -1,6 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Course } from "../models/course.model.js";
 import { Lecture } from "../models/lecture.model.js";
@@ -28,7 +27,11 @@ const createCourse = asyncHandler(async (req, res) => {
 });
 
 const searchCourses = asyncHandler(async (req, res) => {
-  const { query = "", category = [], sortByPrice = "" } = req.query;
+  let { query = "", category = [], sortByPrice = "" } = req.query;
+
+  if (typeof category === "string") {
+    category = [category];
+  }
 
   let searchCriteria = { isPublished: true };
 
@@ -92,10 +95,6 @@ const updateCourse = asyncHandler(async (req, res) => {
   if (!course) {
     throw new ApiError(404, "Course not found");
   }
-
-  // if (!courseTitle || !courseDescription || !courseLevel || !coursePrice || !category || !courseSubtitle) {
-  //   throw new ApiError(400, "All fields are required");
-  // }
 
   course.courseTitle = courseTitle;
   course.subTitle = courseSubtitle;

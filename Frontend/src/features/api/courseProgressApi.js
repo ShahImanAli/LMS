@@ -38,6 +38,20 @@ export const courseProgressApi = createApi({
       }),
       invalidatesTags: ["CourseProgress"],
     }),
+    markLectureAsCompleted: builder.mutation({
+      query: ({ courseId, lectureId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/completed`,
+        method: "POST",
+      }),
+      invalidatesTags: ["CourseProgress"],
+    }),
+    markLectureAsInCompleted: builder.mutation({
+      query: ({ courseId, lectureId }) => ({
+        url: `/${courseId}/lecture/${lectureId}/incompleted`,
+        method: "POST",
+      }),
+      invalidatesTags: ["CourseProgress"],
+    }),
   }),
 });
 
@@ -46,4 +60,6 @@ export const {
   useUpdateCourseProgressMutation,
   useMarkAsCompletedMutation,
   useMarkAsInCompletedMutation,
+  useMarkLectureAsCompletedMutation,
+  useMarkLectureAsInCompletedMutation,
 } = courseProgressApi;

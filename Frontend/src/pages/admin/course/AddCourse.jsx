@@ -21,10 +21,9 @@ const AddCourse = () => {
   const[courseTitle,setCourseTitle] = useState("");
   const[courseCategory,setCourseCategory] = useState("");
 
-  const[createCourse, {data , error ,isLoading , isSuccess }] = useCreateCourseMutation();
+  const[createCourse, {isLoading , isSuccess }] = useCreateCourseMutation();
 
   const navigate = useNavigate();
-  // const isLoading = false; 
 
   const createCourseHandler = async () => {
     await createCourse({courseTitle, category: courseCategory});
@@ -77,6 +76,13 @@ const AddCourse = () => {
                 <SelectItem value="design">Design</SelectItem>
                 <SelectItem value="marketing">Marketing</SelectItem>
                 <SelectItem value="business">Business</SelectItem>
+                <SelectItem value="nextjs">Next JS</SelectItem>
+                <SelectItem value="javascript">Javascript</SelectItem>
+                <SelectItem value="python">Python</SelectItem>
+                <SelectItem value="react">React</SelectItem>
+                <SelectItem value="nodejs">Node.js</SelectItem>
+                <SelectItem value="mongodb">MongoDB</SelectItem>
+                <SelectItem value="docker">Docker</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>

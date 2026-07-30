@@ -3,6 +3,7 @@ import moongose, { Schema } from "mongoose";
 const lectureProgressSchema = new Schema({
   lectureId: { type: String },
   viewed: { type: Boolean },
+  completed: { type: Boolean, default: false },
 });
 
 const courseProgressSchema = new Schema(

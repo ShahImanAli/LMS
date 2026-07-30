@@ -10,6 +10,8 @@ import {
   useUpdateCourseProgressMutation,
   useMarkAsCompletedMutation,
   useMarkAsInCompletedMutation,
+  useMarkLectureAsCompletedMutation,
+  useMarkLectureAsInCompletedMutation,
 } from "@/features/api/courseProgressApi";
 
 const CourseProgress = () => {
@@ -23,11 +25,15 @@ const CourseProgress = () => {
 
   const [updateCourseProgress] = useUpdateCourseProgressMutation();
 
-  const [markAsCompleted, { isLoading: isMarkingCompleted }] =
-    useMarkAsCompletedMutation();
+  const [markAsCompleted] = useMarkAsCompletedMutation();
 
-  const [markAsInCompleted, { isLoading: isMarkingInCompleted }] =
-    useMarkAsInCompletedMutation();
+  const [markAsInCompleted] = useMarkAsInCompletedMutation();
+
+  const [markLectureAsCompleted, { isLoading: isMarkingCompleted }] =
+    useMarkLectureAsCompletedMutation();
+
+  const [markLectureAsInCompleted, { isLoading: isMarkingInCompleted }] =
+    useMarkLectureAsInCompletedMutation();
 
   const {
     data: courseProgress,
@@ -58,6 +64,8 @@ const CourseProgress = () => {
 
   const { courseTitle } = courseDetails;
 
+  const totalLectures = courseDetails?.lectures?.length || 0;
+
   const initializeLecture =
     courseDetails?.lectures && courseDetails.lectures.length > 0
       ? courseDetails.lectures[0]
@@ -77,6 +85,16 @@ const CourseProgress = () => {
       ),
   );
 
+  const completedLectureIds = new Set(
+    (progress || [])
+      .filter((item) => item.completed)
+      .map((item) =>
+        item.lectureId?.toString ? item.lectureId.toString() : item.lectureId,
+      ),
+  );
+
+  const completedCount = completedLectureIds.size;
+
   const handleLectureSelect = (lecture) => {
     setCurrentLecture(lecture);
   };
@@ -92,22 +110,34 @@ const CourseProgress = () => {
 
   const isMarking = isMarkingCompleted || isMarkingInCompleted;
 
-  const handleCourseCompletionToggle = async () => {
-    if (!courseId || isMarking) return;
+  const handleLectureCompletionToggle = async (lectureId, e) => {
+    if (e) e.stopPropagation();
+    if (!courseId || !lectureId || isMarking) return;
+
+    const isCurrentlyCompleted = completedLectureIds.has(lectureId?.toString());
 
     try {
-      if (completed) {
-        const response = await markAsInCompleted(courseId).unwrap();
-        toast.success(response?.message || "Course marked as incomplete.");
+      if (isCurrentlyCompleted) {
+        await markLectureAsInCompleted({ courseId, lectureId }).unwrap();
+        toast.success("Lecture marked as incomplete.");
+        // If course was completed, unmark it since a lecture is now incomplete
+        if (completed) {
+          await markAsInCompleted(courseId).unwrap();
+        }
       } else {
-        const response = await markAsCompleted(courseId).unwrap();
-        toast.success(response?.message || "Course marked as completed.");
+        await markLectureAsCompleted({ courseId, lectureId }).unwrap();
+        toast.success("Lecture marked as complete.");
+        // Check if all lectures are now completed
+        if (completedCount + 1 >= totalLectures && totalLectures > 0) {
+          await markAsCompleted(courseId).unwrap();
+          toast.success("All lectures completed! Course marked as complete.");
+        }
       }
     } catch (error) {
       toast.error(
-        error?.data?.message || "Unable to update course completion status.",
+        error?.data?.message || "Unable to update lecture completion status.",
       );
-      console.error("Error updating course completion:", error);
+      console.error("Error updating lecture completion:", error);
     }
   };
 
@@ -116,10 +146,13 @@ const CourseProgress = () => {
   };
 
   const getYouTubeEmbedUrl = (url) => {
-    if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    if (!url) return "";
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
-    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+    return match && match[2].length === 11
+      ? `https://www.youtube.com/embed/${match[2]}`
+      : url;
   };
 
   return (
@@ -137,25 +170,23 @@ const CourseProgress = () => {
       {/* Course Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="font-bold text-2xl md:text-3xl text-gray-900 dark:text-gray-100">{courseTitle}</h1>
+          <h1 className="font-bold text-2xl md:text-3xl text-gray-900 dark:text-gray-100">
+            {courseTitle}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Continue your learning journey
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            className="w-full sm:w-auto"
-            onClick={handleCourseCompletionToggle}
-            disabled={isMarking}
-          >
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            {isMarking
-              ? "Updating..."
-              : completed
-                ? "Mark as Incomplete"
-                : "Mark as Completed"}
-          </Button>
+          <Badge variant="secondary" className="text-sm">
+            {completedCount} / {totalLectures} lectures completed
+          </Badge>
+          {completed && (
+            <Badge className="text-sm bg-green-600 dark:bg-green-700">
+              <CheckCircle2 className="mr-1 h-4 w-4" />
+              Course Completed
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -219,12 +250,16 @@ const CourseProgress = () => {
               {courseDetails?.lectures?.map((lecture) => {
                 const isViewed = viewedLectureIds.has(lecture?._id?.toString());
                 const isActive = lecture?._id?.toString() === activeLectureId;
+                const isLectureCompleted = completedLectureIds.has(
+                  lecture?._id?.toString(),
+                );
 
                 return (
                   <div
                     key={lecture._id}
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent ${isActive ? "bg-accent" : ""
-                      }`}
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-accent ${
+                      isActive ? "bg-accent" : ""
+                    }`}
                     onClick={() => handleLectureSelect(lecture)}
                   >
                     {isViewed ? (
@@ -237,7 +272,29 @@ const CourseProgress = () => {
                         <p className="font-medium text-sm line-clamp-2 text-gray-900 dark:text-gray-100">
                           {lecture.lectureTitle}
                         </p>
-                        {isViewed && <Badge variant="default">Completed</Badge>}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isLectureCompleted ? (
+                            <Badge
+                              variant="default"
+                              className="cursor-pointer hover:bg-primary/80 transition-colors"
+                              onClick={(e) => handleLectureCompletionToggle(lecture._id, e)}
+                            >
+                              Completed
+                            </Badge>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              disabled={isMarking}
+                              onClick={(e) =>
+                                handleLectureCompletionToggle(lecture._id, e)
+                              }
+                            >
+                              {isMarking ? "..." : "Complete"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

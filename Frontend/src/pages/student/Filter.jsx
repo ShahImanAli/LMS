@@ -13,17 +13,18 @@ import { Separator } from "@/components/ui/separator";
 import React, { useState } from "react";
 
 const categories = [
+  { id: "web-development", label: "Web Development" },
+  { id: "data-science", label: "Data Science" },
+  { id: "design", label: "Design" },
+  { id: "marketing", label: "Marketing" },
+  { id: "business", label: "Business" },
   { id: "nextjs", label: "Next JS" },
-  { id: "data science", label: "Data Science" },
-  { id: "frontend development", label: "Frontend Development" },
-  { id: "fullstack development", label: "Fullstack Development" },
-  { id: "mern stack development", label: "MERN Stack Development" },
-  { id: "backend development", label: "Backend Development" },
   { id: "javascript", label: "Javascript" },
   { id: "python", label: "Python" },
-  { id: "docker", label: "Docker" },
+  { id: "react", label: "React" },
+  { id: "nodejs", label: "Node.js" },
   { id: "mongodb", label: "MongoDB" },
-  { id: "html", label: "HTML" },
+  { id: "docker", label: "Docker" },
 ];
 
 const Filter = ({ handleFilterChange }) => {
@@ -36,19 +37,21 @@ const Filter = ({ handleFilterChange }) => {
         ? prevCategories.filter((id) => id !== categoryId)
         : [...prevCategories, categoryId];
 
-        handleFilterChange(newCategories, sortByPrice);
-        return newCategories;
+      handleFilterChange(newCategories, sortByPrice);
+      return newCategories;
     });
   };
 
   const selectByPriceHandler = (selectedValue) => {
     setSortByPrice(selectedValue);
     handleFilterChange(selectedCategories, selectedValue);
-  }
+  };
   return (
     <div className="w-full md:w-[25%]">
       <div className="flex items-center justify-between ">
-        <h1 className="font-semibold text-lg md:text-lg text-gray-900 dark:text-gray-100">Filter Options</h1>
+        <h1 className="font-semibold text-lg md:text-lg text-gray-900 dark:text-gray-100">
+          Filter Options
+        </h1>
         <Select onValueChange={selectByPriceHandler}>
           <SelectTrigger>
             <SelectValue placeholder="Sort by" />
@@ -64,14 +67,19 @@ const Filter = ({ handleFilterChange }) => {
       </div>
       <Separator className="my-4" />
       <div>
-        <h1 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">CATEGORY</h1>
+        <h1 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
+          CATEGORY
+        </h1>
         {categories.map((category) => (
           <div className="flex items-center space-x-2 my-2" key={category.id}>
             <Checkbox
               id={category.id}
               onCheckedChange={() => handleCategoryChange(category.id)}
             />
-            <Label htmlFor={category.id} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 cursor-pointer">
+            <Label
+              htmlFor={category.id}
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300 cursor-pointer"
+            >
               {category.label}
             </Label>
           </div>
