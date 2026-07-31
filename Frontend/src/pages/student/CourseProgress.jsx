@@ -262,7 +262,7 @@ const CourseProgress = () => {
                     }`}
                     onClick={() => handleLectureSelect(lecture)}
                   >
-                    {isViewed ? (
+                    {isLectureCompleted ? (
                       <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                     ) : (
                       <PlayCircle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
