@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Course } from "../models/course.model.js";
 import { Lecture } from "../models/lecture.model.js";
+import { PurchasedCourse } from "../models/purchasedCourse.model.js";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
@@ -168,6 +169,7 @@ const createLecture = asyncHandler(async (req, res) => {
 
 const getCourseLectures = asyncHandler(async (req, res) => {
   const { courseId } = req.params;
+  const userId = req.user._id;
 
   const course = await Course.findById(courseId).populate("lectures");
 
@@ -175,12 +177,27 @@ const getCourseLectures = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Course not found");
   }
 
+  // Check if user has purchased the course or is the creator
+  const purchased = await PurchasedCourse.findOne({ userId, courseId, status: "completed" });
+  const isCreator = course.creator.toString() === userId.toString();
+
+  // Convert all lectures to plain objects for consistent serialization
+  const lectures = course.lectures.map((lecture) => {
+    const lectureObj = lecture.toObject();
+    // Strip videoUrl from non-preview lectures if user has not purchased and is not the creator
+    if (!purchased && !isCreator && !lectureObj.isPreviewFree) {
+      lectureObj.videoUrl = undefined;
+      lectureObj.publicId = undefined;
+    }
+    return lectureObj;
+  });
+
   res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        course.lectures,
+        lectures,
         "Course lectures fetched successfully"
       )
     );
@@ -250,6 +267,7 @@ const removeLecture = asyncHandler(async (req, res) => {
 
 const getLectureById = asyncHandler(async (req, res) => {
   const { lectureId } = req.params;
+  const userId = req.user._id;
 
   const lecture = await Lecture.findById(lectureId);
 
@@ -257,9 +275,26 @@ const getLectureById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Lecture not found");
   }
 
+  // Convert to plain object for consistent serialization
+  const lectureObj = lecture.toObject();
+
+  // Find the course that contains this lecture
+  const course = await Course.findOne({ lectures: lectureId });
+
+  if (course) {
+    const isCreator = course.creator.toString() === userId.toString();
+    const purchased = await PurchasedCourse.findOne({ userId, courseId: course._id, status: "completed" });
+
+    // If user has not purchased, is not the creator, and lecture is not a preview, strip video URL
+    if (!purchased && !isCreator && !lectureObj.isPreviewFree) {
+      lectureObj.videoUrl = undefined;
+      lectureObj.publicId = undefined;
+    }
+  }
+
   res
     .status(200)
-    .json(new ApiResponse(200, lecture, "Lecture fetched successfully"));
+    .json(new ApiResponse(200, lectureObj, "Lecture fetched successfully"));
 });
 
 const togglePublishCourse = asyncHandler(async (req, res) => {

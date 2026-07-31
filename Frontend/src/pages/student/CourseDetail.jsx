@@ -114,7 +114,7 @@ const CourseDetail = () => {
           <Card>
             <CardContent className="p-4 flex flex-col">
               <div className="w-full mb-4">
-                {course?.lectures?.[0]?.videoUrl ? (
+                {course?.lectures?.[0]?.videoUrl && (course?.lectures?.[0]?.isPreviewFree || purchased) ? (
                   <div className="w-full aspect-video rounded-md overflow-hidden bg-black">
                     {isYouTubeUrl(course.lectures[0].videoUrl) ? (
                       <iframe
@@ -139,8 +139,28 @@ const CourseDetail = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="w-full aspect-video flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md text-gray-500 dark:text-gray-400">
-                    No preview available
+                  <div className="w-full aspect-video rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 relative">
+                    {course?.courseThumbnail?.url ? (
+                      <>
+                        <img
+                          src={course.courseThumbnail.url}
+                          alt={course.courseTitle}
+                          className="w-full h-full object-cover"
+                        />
+                        {!purchased && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <div className="text-center text-white">
+                              <Lock size={40} className="mx-auto mb-2" />
+                              <p className="text-lg font-semibold">Purchase to get access</p>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+                        {purchased ? "No video available" : "Course preview"}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

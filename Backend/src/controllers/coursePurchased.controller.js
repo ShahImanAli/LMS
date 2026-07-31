@@ -152,14 +152,26 @@ const getCourseWithPurchaseStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Course not found");
   }
 
-  const purchased = await PurchasedCourse.findOne({ userId, courseId });
+  const purchased = await PurchasedCourse.findOne({ userId, courseId, status: "completed" });
+  const isCreator = course.creator._id.toString() === userId.toString();
+
+  // Convert all lectures to plain objects for consistent serialization
+  const lectures = course.lectures.map((lecture) => {
+    const lectureObj = lecture.toObject();
+    // Strip videoUrl from non-preview lectures if user has not purchased and is not the creator
+    if (!purchased && !isCreator && !lectureObj.isPreviewFree) {
+      lectureObj.videoUrl = undefined;
+      lectureObj.publicId = undefined;
+    }
+    return lectureObj;
+  });
 
   return res
     .status(200)
     .json(
       new ApiResponse(
         200,
-        { course, purchased: !!purchased },
+        { course: { ...course.toObject(), lectures }, purchased: !!purchased || isCreator },
         "Course retrieved successfully"
       )
     );
